@@ -185,6 +185,7 @@ enum class Opcode {
 	V_CEIL_F16,
 	V_TRUNC_F16,
 	V_RNDNE_F16,
+	V_FRACT_F16,
 	V_SIN_F16,
 	V_COS_F16,
 	V_SIN_F32,
