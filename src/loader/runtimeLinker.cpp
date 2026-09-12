@@ -835,6 +835,27 @@ static bool KytyExceptionHandler(const Common::HostException::ExceptionInfo& exc
 			}
 			std::printf("\n");
 		}
+
+		// The faulting copy in some titles walks an array whose base is a field of a guest
+		// structure. Dumping the qwords around the pointer registers shows which fields were
+		// populated and which were left null, which is what identifies the missing producer.
+		const auto dump_qwords = [](const char* label, uint64_t base, int count) {
+			if (base == 0 || !IsReadableRange(base, static_cast<uint64_t>(count) * sizeof(uint64_t))) {
+				std::printf("%s @ %016" PRIx64 ": unreadable\n", label, base);
+				return;
+			}
+			const auto* p = reinterpret_cast<const uint64_t*>(base);
+			std::printf("%s @ %016" PRIx64 ":\n", label, base);
+			for (int k = 0; k < count; k++) {
+				const uint64_t v = p[k];
+				const char* kind = (v == 0) ? "null"
+				                 : (v >= SYSTEM_RESERVED) ? "ptr "
+				                 : (v < 0x10000u) ? "imm " : "    ";
+				std::printf("  +0x%03x %s %016" PRIx64 "\n", k * 8, kind, v);
+			}
+		};
+		dump_qwords("rsi struct", info->rsi, 48);
+		dump_qwords("rdx buffer", info->rdx, 8);
 		std::fflush(stdout);
 	}
 	EXIT("Unhandled host exception: type=%u code=%u pc=0x%016" PRIx64
