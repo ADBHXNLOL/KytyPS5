@@ -801,6 +801,45 @@ static bool KytyExceptionHandler(const Common::HostException::ExceptionInfo& exc
 			return true;
 		}
 	}
+	{
+		printf("--- Faulting context ---\n");
+		printf("rax=0x%016" PRIx64 " rbx=0x%016" PRIx64 " rcx=0x%016" PRIx64 " rdx=0x%016" PRIx64 "\n",
+		       info->rax, info->rbx, info->rcx, info->rdx);
+		printf("rsi=0x%016" PRIx64 " rdi=0x%016" PRIx64 " rbp=0x%016" PRIx64 " rsp=0x%016" PRIx64 "\n",
+		       info->rsi, info->rdi, info->rbp, info->rsp);
+		printf("r8 =0x%016" PRIx64 " r9 =0x%016" PRIx64 " r10=0x%016" PRIx64 " r11=0x%016" PRIx64 "\n",
+		       info->r8, info->r9, info->r10, info->r11);
+		printf("r12=0x%016" PRIx64 " r13=0x%016" PRIx64 " r14=0x%016" PRIx64 " r15=0x%016" PRIx64 "\n",
+		       info->r12, info->r13, info->r14, info->r15);
+
+		auto* rt = Common::Singleton<RuntimeLinker>::Instance();
+		if (rt != nullptr) {
+			if (auto* p = rt->FindProgramByAddr(info->exception_address); p != nullptr) {
+				printf("module: %s + 0x%016" PRIx64 "\n", p->file_name.string().c_str(),
+				       info->exception_address - p->base_vaddr);
+			}
+		}
+
+		printf("code:");
+		const auto* code = reinterpret_cast<const uint8_t*>(info->exception_address);
+		for (int i = 0; i < 16; i++) {
+			printf(" %02x", code[i]);
+		}
+		printf("\n");
+
+		printf("stack:\n");
+		const auto* stack = reinterpret_cast<const uint64_t*>(info->rsp);
+		for (int i = 0; i < 24; i++) {
+			const uint64_t v = stack[i];
+			if (rt != nullptr) {
+				if (auto* p = rt->FindProgramByAddr(v); p != nullptr) {
+					printf("  [rsp+0x%02x] = 0x%016" PRIx64 "  <- %s + 0x%" PRIx64 "\n",
+					       i * 8, v, p->file_name.filename().string().c_str(), v - p->base_vaddr);
+				}
+			}
+		}
+	}
+
 	EXIT("Unhandled host exception: type=%u code=%u pc=0x%016" PRIx64
 	     " access=%u address=0x%016" PRIx64 "\n",
 	     static_cast<unsigned>(info->type), info->native_code, info->exception_address,
