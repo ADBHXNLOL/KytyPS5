@@ -854,7 +854,19 @@ static bool KytyExceptionHandler(const Common::HostException::ExceptionInfo& exc
 				std::printf("  +0x%03x %s %016" PRIx64 "\n", k * 8, kind, v);
 			}
 		};
-		dump_qwords("rsi struct", info->rsi, 48);
+		// Argument registers are frequently reused by the time a fault happens, so the
+		// structure being dereferenced is usually only reachable through the callee-saved
+		// registers its prologue pushed. Follow those slots instead.
+		if (IsReadableRange(info->rsp, 8 * sizeof(uint64_t))) {
+			const auto* slots = reinterpret_cast<const uint64_t*>(info->rsp);
+			for (int k = 0; k < 6; k++) {
+				if (slots[k] >= SYSTEM_RESERVED) {
+					char label[48];
+					std::snprintf(label, sizeof(label), "[rsp+0x%02x] pointee", k * 8);
+					dump_qwords(label, slots[k], 40);
+				}
+			}
+		}
 		dump_qwords("rdx buffer", info->rdx, 8);
 		std::fflush(stdout);
 	}
