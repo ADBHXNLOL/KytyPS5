@@ -23,6 +23,7 @@ enum class Direction { Silent, Console, File };
 
 Direction GetDirection();
 bool      IsSilent();
+bool      IsTraceable();
 void      Write(std::string_view text);
 void      Write(fmt::text_style style, std::string_view text);
 void      WriteFatal(std::string_view text);

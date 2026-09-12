@@ -49,7 +49,7 @@
 // NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
 #define PRINT_NAME()                                                                               \
 	if (PRINT_NAME_ENABLED) {                                                                      \
-		if (Log::GetDirection() != Log::Direction::Silent) {                                       \
+		if (Log::IsTraceable()) {                                       \
 			const auto print_name_time = Loader::Timer::GetTime().ToString("HH24:MI:SS.FFF");      \
 			LOGF_COLOR(Log::Color::Cyan, "[%d][%s] %s::%s::%s()\n",                                \
 			           Common::Thread::GetThreadIdUnique(), print_name_time.c_str(), g_library,    \

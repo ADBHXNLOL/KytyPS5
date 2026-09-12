@@ -172,6 +172,10 @@ Direction GetDirection() {
 	return g_direction;
 }
 
+bool IsTraceable() {
+	return g_initialized && g_direction != Direction::Silent;
+}
+
 bool IsSilent() {
 	// Before init LOGF must keep writing to stdout, so report non-silent.
 	return g_initialized && g_direction == Direction::Silent;
